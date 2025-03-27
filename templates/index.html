@@ -3,100 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Code Customizer</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <title>QR Code Generator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+
     <style>
         body {
-            background-color: #f8f9fa;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            font-family: 'Arial', sans-serif;
+            color: white;
         }
         .container {
-            max-width: 600px;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
             margin-top: 50px;
+            color: black;
         }
-        #preview {
-            display: block;
+        h2 {
+            text-align: center;
+            font-weight: bold;
+        }
+        label {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        input, select, button {
+            margin-top: 10px;
+        }
+        .btn-generate {
+            background-color: #28a745;
+            color: white;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+        .btn-generate:hover {
+            background-color: #218838;
+            transform: scale(1.05);
+        }
+        .qr-preview {
+            text-align: center;
             margin-top: 20px;
-            max-width: 100%;
+        }
+        .qr-preview img {
+            max-width: 250px;
+            border: 3px solid #fff;
+            padding: 5px;
+            border-radius: 15px;
+            box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.3);
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 14px;
+            opacity: 0.8;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2 class="text-center">Customize Your QR Code</h2>
-        <form id="qrForm">
-            <div class="mb-3">
-                <label for="data" class="form-label">Enter Data (URL/Text)</label>
-                <input type="text" class="form-control" id="data" name="data" required>
-            </div>
-            <div class="mb-3">
-                <label for="fg_color" class="form-label">Foreground Color</label>
-                <input type="color" class="form-control" id="fg_color" name="fg_color" value="#000000">
-            </div>
-            <div class="mb-3">
-                <label for="bg_color" class="form-label">Background Color</label>
-                <input type="color" class="form-control" id="bg_color" name="bg_color" value="#FFFFFF">
-            </div>
-            <div class="mb-3">
-                <label for="shape" class="form-label">QR Code Shape</label>
-                <select class="form-select" id="shape" name="shape">
-                    <option value="square">Square</option>
-                    <option value="dots">Dots</option>
-                    <option value="rounded">Rounded</option>
-                </select>
-            </div>
-            <div class="mb-3">
-                <label for="logo" class="form-label">Upload Logo (Optional)</label>
-                <input type="file" class="form-control" id="logo" name="logo" accept="image/*">
-            </div>
-            <button type="submit" class="btn btn-primary w-100">Generate QR Code</button>
-        </form>
 
-        <img id="preview" class="img-fluid" style="display:none;">
-        <a id="downloadBtn" href="#" download="qr_code.png" class="btn btn-success w-100 mt-3" style="display:none;">Download QR Code</a>
+<div class="container">
+    <h2><i class="fas fa-qrcode"></i> Generate a Custom QR Code</h2>
+
+    <form id="qrForm">
+        <label>Enter Data:</label>
+        <input type="text" name="data" id="data" class="form-control" required placeholder="Enter text or URL">
+
+        <label>Foreground Color:</label>
+        <input type="color" name="fg_color" class="form-control form-control-color" value="#000000">
+
+        <label>Background Color:</label>
+        <input type="color" name="bg_color" class="form-control form-control-color" value="#FFFFFF">
+
+        <label>QR Code Shape:</label>
+        <select name="shape" class="form-select">
+            <option value="square">Square</option>
+            <option value="dots">Dots</option>
+            <option value="rounded">Rounded</option>
+            <option value="gapped_square">Gapped Square</option>
+        </select>
+
+        <label>Upload Logo (Optional):</label>
+        <input type="file" name="logo" id="logo" class="form-control" accept="image/*">
+
+        <button type="submit" class="btn btn-generate w-100"><i class="fas fa-magic"></i> Generate QR Code</button>
+    </form>
+
+    <div class="qr-preview" id="qrContainer" style="display: none;">
+        <h3><i class="fas fa-eye"></i> QR Code Preview</h3>
+        <img id="qrImage" src="" alt="QR Code">
+        <br>
+        <a id="downloadLink" href="#" class="btn btn-primary mt-3" download="qr_code.png"><i class="fas fa-download"></i> Download QR Code</a>
     </div>
+</div>
 
-    <script>
-        document.getElementById('qrForm').addEventListener('submit', async function(event) {
-            event.preventDefault();  // Prevent default form submission
+<div class="footer">
+    <p>Made with ❤️ by <strong>Dhanusha</strong></p>
+</div>
 
-            let formData = new FormData(this);
+<script>
+    document.getElementById("qrForm").onsubmit = async function (event) {
+        event.preventDefault();
 
-            try {
-                let response = await fetch('/generate_qr', {
-                    method: 'POST',
-                    body: formData,
-                    headers: { "Accept": "image/png" }
-                });
+        let formData = new FormData(this);
 
-                if (!response.ok) {
-                    throw new Error('Failed to generate QR Code');
-                }
-
-                let blob = await response.blob();
-                let url = URL.createObjectURL(blob);
-
-                let preview = document.getElementById('preview');
-                let downloadBtn = document.getElementById('downloadBtn');
-
-                // Revoke old URL to avoid memory leaks
-                if (preview.src) {
-                    URL.revokeObjectURL(preview.src);
-                }
-
-                preview.src = url;
-                preview.style.display = 'block';
-                
-                downloadBtn.href = url;
-                downloadBtn.style.display = 'block';
-
-            } catch (error) {
-                alert(error.message);
-            }
+        let response = await fetch("/generate_qr", {
+            method: "POST",
+            body: formData
         });
-    </script>
+
+        if (!response.ok) {
+            alert("Error generating QR code.");
+            return;
+        }
+
+        let result = await response.json();
+        let filename = result.filename;
+        let qrUrl = "/qrcode/" + filename;
+
+        document.getElementById("qrImage").src = qrUrl;
+        document.getElementById("downloadLink").href = qrUrl;
+        document.getElementById("qrContainer").style.display = "block";
+    };
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
