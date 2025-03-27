@@ -27,7 +27,7 @@
 <body>
     <div class="container">
         <h2 class="text-center">Customize Your QR Code</h2>
-        <form id="qrForm" action="/generate_qr" method="post" enctype="multipart/form-data">
+        <form id="qrForm">
             <div class="mb-3">
                 <label for="data" class="form-label">Enter Data (URL/Text)</label>
                 <input type="text" class="form-control" id="data" name="data" required>
@@ -54,22 +54,49 @@
             </div>
             <button type="submit" class="btn btn-primary w-100">Generate QR Code</button>
         </form>
+
         <img id="preview" class="img-fluid" style="display:none;">
         <a id="downloadBtn" href="#" download="qr_code.png" class="btn btn-success w-100 mt-3" style="display:none;">Download QR Code</a>
     </div>
 
     <script>
-        document.getElementById('qrForm').onsubmit = async function(event) {
-            event.preventDefault();
+        document.getElementById('qrForm').addEventListener('submit', async function(event) {
+            event.preventDefault();  // Prevent default form submission
+
             let formData = new FormData(this);
-            let response = await fetch('/generate_qr', { method: 'POST', body: formData });
-            let blob = await response.blob();
-            let url = URL.createObjectURL(blob);
-            document.getElementById('preview').src = url;
-            document.getElementById('preview').style.display = 'block';
-            document.getElementById('downloadBtn').href = url;
-            document.getElementById('downloadBtn').style.display = 'block';
-        };
+
+            try {
+                let response = await fetch('/generate_qr', {
+                    method: 'POST',
+                    body: formData,
+                    headers: { "Accept": "image/png" }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to generate QR Code');
+                }
+
+                let blob = await response.blob();
+                let url = URL.createObjectURL(blob);
+
+                let preview = document.getElementById('preview');
+                let downloadBtn = document.getElementById('downloadBtn');
+
+                // Revoke old URL to avoid memory leaks
+                if (preview.src) {
+                    URL.revokeObjectURL(preview.src);
+                }
+
+                preview.src = url;
+                preview.style.display = 'block';
+                
+                downloadBtn.href = url;
+                downloadBtn.style.display = 'block';
+
+            } catch (error) {
+                alert(error.message);
+            }
+        });
     </script>
 </body>
 </html>
